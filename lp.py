@@ -201,7 +201,7 @@ class LP():
         a = np.zeros((len(self.constraints), len(self.variables)))
         for i, constr in enumerate(self.constraints):
             for j, variable in enumerate(constr.vars):
-                a[i, variable.index] = constr.coeffs[j]
+                a[i, variable.index] += constr.coeffs[j]
 
         return a
 
@@ -223,7 +223,7 @@ class LP():
         """
         c = np.zeros(len(self.variables))
         for i, var in enumerate(self.objective.variables):
-            c[var.index] = self.objective.coeffs[i]
+            c[var.index] += self.objective.coeffs[i]
 
         return c
 
