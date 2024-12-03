@@ -17,6 +17,15 @@ class Constraint():
         self.vars = vars
         self.b = b
 
+def as_expr(value):
+    if isinstance(value, float) or isinstance(value, int):
+        return Expression([], [], float(value))
+    if isinstance(value, Variable):
+        return Expression([1.0], [value], 0.0)
+    assert isinstance(value, Expression), "Invalid type used as expression"
+
+    return value
+
 class Expression():
     """
     Represents a linear combination of variables
@@ -53,12 +62,7 @@ class Expression():
         """
         Add an expression to a variable or expression
         """
-        if isinstance(other, float) or isinstance(other, int):
-            return Expression(self.coeffs, self.variables, float(other) + self.constant)
-        if isinstance(other, Variable):
-            return other + self
-
-        assert isinstance(other, Expression)
+        other = as_expr(other)
         return Expression(self.coeffs + other.coeffs, self.variables + other.variables, self.constant + other.constant)
 
     def __radd__(self, other):
@@ -112,13 +116,7 @@ class Variable():
         """
         Add a variable to a variable or expression
         """
-        if isinstance(other, float) or isinstance(other, int):
-            return Expression([1.0], [self], float(other))
-        if isinstance(other, Variable):
-            return Expression([1.0, 1.0], [self, other], 0.0)
-
-        assert isinstance(other, Expression)
-        return Expression([1.0] + other.coeffs, [self] + other.variables, other.constant)
+        return as_expr(self) + other
 
     def __radd__(self, other):
         return self + other
@@ -127,9 +125,7 @@ class Variable():
         """
         Multiply a variable by a scalar coefficient
         """
-        assert (isinstance(other, float) or isinstance(other, int)), "Non-scalar multiplication of variable"
-
-        return Expression([float(other)], [self], 0.0)
+        return as_expr(self) * other
 
     def __rmul__(self, other):
         return self * other
@@ -141,16 +137,13 @@ class Variable():
         return self + (-other)
 
     def __le__(self, other):
-        return Expression([1.0], [self], 0.0) <= other
+        return as_expr(self) <= other
 
-    def __ge__(self, other):        
-        return Expression([1.0], [self], 0.0) >= other
-
-    def __hash__(self):
-        hash(self.index)
+    def __ge__(self, other):
+        return as_expr(self) >= other
 
     def __eq__(self, other):
-        return self.index == other.index
+        return as_expr(self) == other
 
 class LP():
     def __init__(self):
