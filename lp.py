@@ -1,0 +1,229 @@
+"""
+Authors: Jacob Dentes
+
+Holds a class for an LP input
+"""
+import numpy as np
+
+MAXIMIZE = 1.0
+MINIMIZE = -1.0
+
+class Constraint():
+    """
+    Represents a constraint in (coeffs * vars <= b) form
+    """
+    def __init__(self, coeffs, vars, b):
+        self.coeffs = coeffs
+        self.vars = vars
+        self.b = b
+
+class Expression():
+    """
+    Represents a linear combination of variables
+    """
+    def __init__(self, coeffs, variables, constant):
+        """
+        Create an expression that is variables added together where
+        variable[i]'s coefficient is coeffs[i]. Constant is an added
+        scalar (not multiplied by a variable)
+
+        coeffs: a list of floats
+        variables: a list of Variable objects
+        constant: a float
+        """
+        assert len(coeffs) == len(variables)
+        self.coeffs = coeffs
+        self.variables = variables
+        self.constant = constant
+
+    def evaluate(self, assignment):
+        """
+        Give the value of this expression with variable assignments
+        given by assignment
+
+        assignment: a numpy array of variable values ordered by index
+        """
+        acc = self.constant
+        for i, var in enumerate(self.variables):
+            acc += self.coeffs[i] * assignment[var.index]
+
+        return acc
+
+    def __add__(self, other):
+        """
+        Add an expression to a variable or expression
+        """
+        if isinstance(other, float) or isinstance(other, int):
+            return Expression(self.coeffs, self.variables, float(other) + self.constant)
+        if isinstance(other, Variable):
+            return other + self
+
+        assert isinstance(other, Expression)
+        return Expression(self.coeffs + other.coeffs, self.variables + other.variables, self.constant + other.constant)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __mul__(self, other):
+        """
+        Multiply an expression by a scalar coefficient
+        """
+        assert (isinstance(other, float) or isinstance(other, int)), "Non-scalar multiplication of expression"
+
+        return Expression([float(other)*c for c in self.coeffs], self.variables, float(other)*self.constant)
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __neg__(self):
+        return -1.0 * self
+
+    def __sub__(self, other):
+        return self + (-other)
+
+    def __rsub__(self, other):
+        return self - other
+
+    def __le__(self, other):
+        if isinstance(other, float) or isinstance(other, int):
+            return Constraint(self.coeffs, self.variables, other - self.constant)
+        return self - other <= 0
+
+    def __ge__(self, other):
+        return other <= self            
+
+    def __eq__(self, other):
+        return [self <= other, self >= other]
+        
+class Variable():
+    """
+    Represents an LP variable
+    """
+    def __init__(self, index, name=None):
+        """
+        Creates a new variable
+        """
+        if name is None:
+            name = f"variable_{index}"
+        self.index = index
+        self.name = name
+
+    def __add__(self, other):
+        """
+        Add a variable to a variable or expression
+        """
+        if isinstance(other, float) or isinstance(other, int):
+            return Expression([1.0], [self], float(other))
+        if isinstance(other, Variable):
+            return Expression([1.0, 1.0], [self, other], 0.0)
+
+        assert isinstance(other, Expression)
+        return Expression([1.0] + other.coeffs, [self] + other.variables, other.constant)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __mul__(self, other):
+        """
+        Multiply a variable by a scalar coefficient
+        """
+        assert (isinstance(other, float) or isinstance(other, int)), "Non-scalar multiplication of variable"
+
+        return Expression([float(other)], [self], 0.0)
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __neg__(self):
+        return -1.0 * self
+
+    def __sub__(self, other):
+        return self + (-other)
+
+    def __le__(self, other):
+        return Expression([1.0], [self], 0.0) <= other
+
+    def __ge__(self, other):        
+        return Expression([1.0], [self], 0.0) >= other
+
+    def __hash__(self):
+        hash(self.index)
+
+    def __eq__(self, other):
+        return self.index == other.index
+
+class LP():
+    def __init__(self):
+        self.variables = []
+        self.constraints = []
+        self.objective = Expression([], [], 0.0)
+
+    def add_var(self, name=None, nonnegative=True):
+        """
+        Create a fresh variable to use in constraints
+
+        If nonnegative is True (default) then the variable will be >= 0
+        """
+        if nonnegative:
+            var = Variable(len(self.variables), name)
+            self.variables.append(var)
+            return var
+
+        var1 = self.add_var()
+        var2 = self.add_var()
+        return var1 - var2
+
+    def add_constr(self, constr):
+        """
+        Add a constraint to the LP
+        """
+        if isinstance(constr, list):
+            self.constraints += constr
+        else:
+            self.constraints.append(constr)
+
+    def set_objective(self, objective, sense):
+        """
+        Set the objective with sense (MINIMIZE or MAXIMIZE)
+        """
+        if isinstance(objective, float) or isinstance(objective, int):
+            objective = Expression([], [], float(objective))
+        if isinstance(objective, Variable):
+            objective = Expression([1.0], [objective], 0.0)
+        assert isinstance(objective, Expression)
+        self.objective = sense * objective
+
+    def get_A(self):
+        """
+        Returns the constraint matrix of the LP as a numpy array.
+        Given in Ax <= b, x >= 0 form.
+        """
+        a = np.zeros((len(self.constraints), len(self.variables)))
+        for i, constr in enumerate(self.constraints):
+            for j, variable in enumerate(constr.vars):
+                a[i, variable.index] = constr.coeffs[j]
+
+        return a
+
+    def get_b(self):
+        """
+        Returns the RHS scalars of the LP as a numpy array.
+        Given in Ax <= b, x >= 0 form
+        """
+        b = np.zeros(len(self.constraints))
+        for i, constr in enumerate(self.constraints):
+                b[i] = constr.b
+
+        return b
+
+    def get_c(self):
+        """
+        Returns the vector c as a numpy array.
+        Given in maximize c^T x form
+        """
+        c = np.zeros(len(self.variables))
+        for i, var in enumerate(self.objective.variables):
+            c[var.index] = self.objective.coeffs[i]
+
+        return c
+
