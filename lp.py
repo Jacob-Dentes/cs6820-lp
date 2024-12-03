@@ -50,7 +50,7 @@ class Expression():
         Give the value of this expression with variable assignments
         given by assignment
 
-        assignment: a numpy array of variable values ordered by index
+        assignment: an arraylike of all variable values ordered by index
         """
         acc = self.constant
         for i, var in enumerate(self.variables):
@@ -112,19 +112,16 @@ class Variable():
         self.index = index
         self.name = name
 
+    def evaluate(self, assignment):
+        return as_expr(self).evaluate(assignment)
+
     def __add__(self, other):
-        """
-        Add a variable to a variable or expression
-        """
         return as_expr(self) + other
 
     def __radd__(self, other):
         return self + other
 
     def __mul__(self, other):
-        """
-        Multiply a variable by a scalar coefficient
-        """
         return as_expr(self) * other
 
     def __rmul__(self, other):
