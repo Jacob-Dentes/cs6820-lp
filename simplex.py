@@ -5,6 +5,7 @@ An implementation of the Simplex method
 for solving Ax <= b functions
 """
 import numpy as np
+import scipy as sc
 from lp import InfeasibleException, UnboundedException
 
 def blands_rule(A, 
@@ -24,11 +25,11 @@ def blands_rule(A,
     entering = non_basis[entering_idx]
 
     # min ratio test
-    denominators = system_sol[:, entering_idx]
+    denominators = system_sol[:, [entering_idx]].todense().flatten()
     pos_denominators = denominators > 0
     if pos_denominators.sum() <= 0:
         raise UnboundedException("LP unbounded")
-    leaving_idx = np.argmin(np.linalg.solve(A_b, b)[pos_denominators] / denominators[pos_denominators])
+    leaving_idx = np.argmin(sc.sparse.linalg.spsolve(A_b, b)[pos_denominators] / denominators[pos_denominators])
     leaving = basis[pos_denominators][leaving_idx]
 
     return (entering, leaving)
@@ -45,10 +46,10 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
         c_b = c[basis]
         c_n = c[non_basis]
 
-        system_sol = np.linalg.solve(A_b, A_n)
+        system_sol = sc.sparse.linalg.spsolve(A_b, A_n)
 
         reduced_costs = c_n.T - c_b.T @ system_sol
-        if np.max(reduced_costs) < tolerance:
+        if reduced_costs.max() < tolerance:
             break
 
         entering, leaving = pivot_rule(A, 
@@ -70,7 +71,7 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
         basis.sort()
         non_basis.sort()
 
-    x_b = np.linalg.solve(A_b, b)
+    x_b = sc.sparse.linalg.spsolve(A_b, b)
     sol = np.zeros(len(c))
     sol[basis] = x_b
     return sol
@@ -96,7 +97,7 @@ def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10):
         aux_basis += list(range(A.shape[1], A_aux.shape[1]))
         aux_basis = np.array(aux_basis)
 
-        phase_1 = _simplex_aux(A_aux, b, c_aux, aux_basis, tolerance, pivot_rule)
+        phase_1 = _simplex_aux(sc.sparse.csc_array(A_aux), b, c_aux, aux_basis, tolerance, pivot_rule)
 
         if np.sum(phase_1[A.shape[1]+1:]) > tolerance:
             raise InfeasibleException("LP infeasible")
@@ -108,5 +109,6 @@ def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10):
     else:
         init_basis = np.array(list(range(A.shape[1] - A.shape[0], A.shape[1])))
     
-    # second phas simplex
-    return _simplex_aux(A, b, c, init_basis, tolerance, pivot_rule)[:A.shape[1]-A.shape[0]]
+    # second phase simplex
+    phase_2 = _simplex_aux(sc.sparse.csc_array(A), b, c, init_basis, tolerance, pivot_rule)[:A.shape[1]-A.shape[0]]
+    return phase_2
