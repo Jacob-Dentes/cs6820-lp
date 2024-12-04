@@ -8,18 +8,8 @@ import numpy as np
 import scipy as sc
 from lp import InfeasibleException, UnboundedException
 
-def blands_rule(A, 
-                b, 
-                c,
-                A_b,
-                A_n, 
-                c_b,
-                c_n,
-                system_sol,
-                tolerance, 
-                non_basis, 
-                basis, 
-                reduced_costs):
+def blands_rule(pivot_inp):
+    _, b, _, A_b, _, _, _, system_sol, tolerance, non_basis, basis, reduced_costs = pivot_inp
     # get first with a reduced cost
     entering_idx = np.argmax(reduced_costs >= tolerance)
     entering = non_basis[entering_idx]
@@ -40,6 +30,8 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
     basis = np.array(basis)
     non_basis = np.array([i for i in range(len(c)) if i not in basis])
 
+    pivot_inp = [None] * 12
+
     while True:
         A_b = A[:, basis]
         A_n = A[:, non_basis]
@@ -52,18 +44,20 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
         if reduced_costs.max() < tolerance:
             break
 
-        entering, leaving = pivot_rule(A, 
-                                       b, 
-                                       c, 
-                                       A_b, 
-                                       A_n, 
-                                       c_b, 
-                                       c_n, 
-                                       system_sol, 
-                                       tolerance,
-                                       non_basis, 
-                                       basis, 
-                                       reduced_costs)
+        pivot_inp[:12] = [A, 
+                b, 
+                c,
+                A_b,
+                A_n, 
+                c_b,
+                c_n,
+                system_sol,
+                tolerance, 
+                non_basis, 
+                basis, 
+                reduced_costs]
+
+        entering, leaving = pivot_rule(pivot_inp)
         
         basis[basis == leaving] = entering
         non_basis[non_basis == entering] = leaving
