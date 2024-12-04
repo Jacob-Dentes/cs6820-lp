@@ -1,4 +1,5 @@
 from lp import LP, MAXIMIZE
+from simplex import simplex
 
 program = LP()
 
@@ -34,6 +35,13 @@ print(knapsack_lp.get_b())
 print(knapsack_lp.get_c())
 print("")
 
-sol = [1.0, 1.0, 0.0]
+sol = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
 print(f"Example Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
 print(f"Value: {knapsack_lp.objective.evaluate(sol)}")
+
+for i in x:
+    knapsack_lp.add_constr(x[i] >= 0.4)
+
+sol2 = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
+print(f"Modified Example Knapsack Solution: {[x[i].evaluate(sol2) for i in x]}")
+print(f"Value: {knapsack_lp.objective.evaluate(sol2)}")

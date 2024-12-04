@@ -8,6 +8,14 @@ import numpy as np
 MAXIMIZE = 1.0
 MINIMIZE = -1.0
 
+class InfeasibleException(Exception):
+    def __init__(self, msg):
+        self.message = msg
+
+class UnboundedException(Exception):
+    def __init__(self, msg):
+        self.message = msg
+
 class Constraint():
     """
     Represents a constraint in (coeffs * vars <= b) form
@@ -91,10 +99,10 @@ class Expression():
     def __le__(self, other):
         if isinstance(other, float) or isinstance(other, int):
             return Constraint(self.coeffs, self.variables, other - self.constant)
-        return self - other <= 0
+        return self - as_expr(other) <= 0
 
     def __ge__(self, other):
-        return other <= self            
+        return as_expr(other) <= self 
 
     def __eq__(self, other):
         return [self <= other, self >= other]
