@@ -32,6 +32,7 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
 
     pivot_inp = [None] * 12
 
+    pivots = 0
     while True:
         A_b = A[:, basis]
         A_n = A[:, non_basis]
@@ -64,13 +65,14 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
 
         basis.sort()
         non_basis.sort()
+        pivots += 1
 
     x_b = sc.sparse.linalg.spsolve(A_b, b)
     sol = np.zeros(len(c))
     sol[basis] = x_b
-    return sol
+    return (sol, pivots)
 
-def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10):
+def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10, count_pivots=False):
     """
     Use simplex method to solve Max (c^T x) subject to Ax <= b
     """
@@ -96,13 +98,16 @@ def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10):
         if np.sum(phase_1[A.shape[1]+1:]) > tolerance:
             raise InfeasibleException("LP infeasible")
 
-        init_basis = np.array(list(range(A_aux.shape[1])))[phase_1 > tolerance]
+        init_basis = np.array(list(range(A_aux.shape[1])))[phase_1[0] > tolerance]
         assert len(init_basis) >= A.shape[0]
         init_basis = init_basis[:A.shape[0]]
 
     else:
+        phase_1 = (None, 0)
         init_basis = np.array(list(range(A.shape[1] - A.shape[0], A.shape[1])))
     
     # second phase simplex
     phase_2 = _simplex_aux(sc.sparse.csc_array(A), b, c, init_basis, tolerance, pivot_rule)[:A.shape[1]-A.shape[0]]
-    return phase_2
+    if count_pivots:
+        return (phase_2[0], phase_2[1] + phase_1[1])
+    return phase_2[0]

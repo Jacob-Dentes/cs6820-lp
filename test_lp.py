@@ -1,5 +1,6 @@
 from lp import LP, MAXIMIZE
 from simplex import simplex
+from correct_solver import solve
 
 program = LP()
 
@@ -36,12 +37,18 @@ print(knapsack_lp.get_c())
 print("")
 
 sol = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
+c_sol = solve(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
 print(f"Example Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
 print(f"Value: {knapsack_lp.objective.evaluate(sol)}")
+print(f"Scipy Knapsack Solution: {[x[i].evaluate(c_sol) for i in x]}")
+print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
 
 for i in x:
     knapsack_lp.add_constr(x[i] >= 0.4)
 
 sol2 = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
+c_sol2 = solve(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
 print(f"Modified Example Knapsack Solution: {[x[i].evaluate(sol2) for i in x]}")
 print(f"Value: {knapsack_lp.objective.evaluate(sol2)}")
+print(f"Scipy Modified Example Knapsack Solution: {[x[i].evaluate(c_sol2) for i in x]}")
+print(f"Value: {knapsack_lp.objective.evaluate(c_sol2)}")
