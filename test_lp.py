@@ -1,6 +1,7 @@
 from lp import LP, MAXIMIZE
 from simplex import simplex
 from correct_solver import solve
+import random
 
 def simple_example():
     program = LP()
@@ -55,9 +56,36 @@ def example_knapsack():
     print(f"Scipy Modified Example Knapsack Solution: {[x[i].evaluate(c_sol2) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol2)}")
 
+def example_random_knapsack():
+    n = 5 # number of variables
+    knapsack_lp = LP()
+    knapsack_values = [random.randint(0, 100) for i in range(n)]
+    knapsack_weights = [random.randint(0, 100) for i in range(n)]
+    knapsack_W = random.randint(0, 100)
+
+    x = {i: knapsack_lp.add_var(f"x{i}") for i in range(3)}
+    for i in x:
+        knapsack_lp.add_constr(x[i] <= 1)
+
+    knapsack_lp.add_constr(sum(knapsack_weights[i] * x[i] for i in x) <= knapsack_W)
+    knapsack_lp.set_objective(sum(knapsack_values[i] * x[i] for i in x), MAXIMIZE)
+
+    print(knapsack_lp.get_A())
+    print(knapsack_lp.get_b())
+    print(knapsack_lp.get_c())
+    print("")
+
+    sol = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
+    c_sol = solve(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
+    print(f"Example Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
+    print(f"Value: {knapsack_lp.objective.evaluate(sol)}")
+    print(f"Scipy Knapsack Solution: {[x[i].evaluate(c_sol) for i in x]}")
+    print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
+
+
 
 def example_kleemintycube():
-    n = 5 # number of equations
+    n = 5 # number of variables
     kleemintycube_lp = LP()
     kleemintycube_values = [2 ** (n - 1 - i) for i in range(n)]
     x = {i: kleemintycube_lp.add_var(f"x{i}") for i in range(n)}
@@ -79,7 +107,7 @@ def example_kleemintycube():
     print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {kleemintycube_lp.objective.evaluate(c_sol)}")
 
-example_kleemintycube()
+example_random_knapsack()
 
 
 
