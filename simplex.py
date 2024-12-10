@@ -2,17 +2,41 @@
 Authors: Jacob Dentes
 
 An implementation of the Simplex method
-for solving Ax <= b functions
+for solving Ax <= b lps
 """
 import numpy as np
 import scipy as sc
 from lp import InfeasibleException, UnboundedException
 
+# also known as "minimum index"
 def blands_rule(pivot_inp):
     _, b, _, A_b, _, _, _, system_sol, tolerance, non_basis, basis, reduced_costs = pivot_inp
     # get first with a reduced cost
     entering_idx = np.argmax(reduced_costs >= tolerance)
     entering = non_basis[entering_idx]
+    
+    # min ratio test
+    denominators = system_sol[:, [entering_idx]].todense().flatten()
+    pos_denominators = denominators > 0
+    if pos_denominators.sum() <= 0:
+        raise UnboundedException("LP unbounded")
+    leaving_idx = np.argmin(sc.sparse.linalg.spsolve(A_b, b)[pos_denominators] / denominators[pos_denominators])
+    leaving = basis[pos_denominators][leaving_idx]
+
+    return (entering, leaving)
+
+# also known as "least used"
+def zadehs_rule(pivot_inp):
+    if len(pivot_inp) < 13:
+        pivot_inp.append(np.zeros(pivot_inp[0].shape[1]))
+    _, b, _, A_b, _, _, _, system_sol, tolerance, non_basis, basis, reduced_costs, used = pivot_inp
+    # get least used variable
+    entering_options = (reduced_costs >= tolerance).nonzero()
+    least_used = np.argmin(used[non_basis[entering_options]]) # index of least used entering option
+    entering = non_basis[entering_options][least_used]    
+    entering_idx = np.argmax(non_basis == entering)
+
+    pivot_inp[12][entering] += 1
 
     # min ratio test
     denominators = system_sol[:, [entering_idx]].todense().flatten()
@@ -23,6 +47,33 @@ def blands_rule(pivot_inp):
     leaving = basis[pos_denominators][leaving_idx]
 
     return (entering, leaving)
+
+# also known as "least recently used"
+def cunninghams_rule(pivot_inp):
+    if len(pivot_inp) < 13:
+        pivot_inp.append(np.zeros(pivot_inp[0].shape[1]))
+        pivot_inp.append(0)
+
+    _, b, _, A_b, _, _, _, system_sol, tolerance, non_basis, basis, reduced_costs, used, iter = pivot_inp
+    # get least recently used variable
+    entering_options = (reduced_costs >= tolerance).nonzero()
+    least_rec_used = np.argmin(used[non_basis[entering_options]]) # index of least recently used entering option
+    entering = non_basis[entering_options][least_rec_used]    
+    entering_idx = np.argmax(non_basis == entering)
+
+    pivot_inp[12][entering] = iter
+    pivot_inp[13] += 1
+
+    # min ratio test
+    denominators = system_sol[:, [entering_idx]].todense().flatten()
+    pos_denominators = denominators > 0
+    if pos_denominators.sum() <= 0:
+        raise UnboundedException("LP unbounded")
+    leaving_idx = np.argmin(sc.sparse.linalg.spsolve(A_b, b)[pos_denominators] / denominators[pos_denominators])
+    leaving = basis[pos_denominators][leaving_idx]
+
+    return (entering, leaving)
+    
 
 def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
     # Solves simplex starting at an initial basis
