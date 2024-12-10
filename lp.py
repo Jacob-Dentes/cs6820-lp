@@ -94,7 +94,7 @@ class Expression():
         return self + (-other)
 
     def __rsub__(self, other):
-        return self - other
+        return (-self) + other
 
     def __le__(self, other):
         if isinstance(other, float) or isinstance(other, int):
@@ -140,6 +140,9 @@ class Variable():
 
     def __sub__(self, other):
         return self + (-other)
+
+    def __rsub__(self, other):
+        return (-self) + other
 
     def __le__(self, other):
         return as_expr(self) <= other
