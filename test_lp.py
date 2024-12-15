@@ -2,6 +2,7 @@ from lp import LP, MAXIMIZE
 from simplex import simplex
 from correct_solver import solve
 import random
+import numpy as np
 
 def simple_example():
     program = LP()
@@ -56,19 +57,44 @@ def example_knapsack():
     print(f"Scipy Modified Example Knapsack Solution: {[x[i].evaluate(c_sol2) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol2)}")
 
-def example_random_knapsack():
-    n = 5 # number of variables
+def formulate_knapsack(knapsack_values, knapsack_weights, knapsack_W):
     knapsack_lp = LP()
-    knapsack_values = [random.randint(0, 100) for i in range(n)]
-    knapsack_weights = [random.randint(0, 100) for i in range(n)]
-    knapsack_W = random.randint(0, 100)
 
-    x = {i: knapsack_lp.add_var(f"x{i}") for i in range(3)}
+    x = {i: knapsack_lp.add_var(f"x{i}") for i in range(len(knapsack_values))}
     for i in x:
         knapsack_lp.add_constr(x[i] <= 1)
 
     knapsack_lp.add_constr(sum(knapsack_weights[i] * x[i] for i in x) <= knapsack_W)
     knapsack_lp.set_objective(sum(knapsack_values[i] * x[i] for i in x), MAXIMIZE)
+
+    return x, knapsack_lp
+
+def formulate_uniformly_random_knapsack(n=5):
+    knapsack_values = [random.randint(0, 100) for i in range(n)]
+    knapsack_weights = [random.randint(0, 100) for i in range(n)]
+    knapsack_W = random.randint(0, 100)
+
+    return formulate_knapsack(knapsack_values, knapsack_weights, knapsack_W)
+
+def formulate_gaussian_knapsack(n=5):
+    # resample a normal distribution until values positive
+    def positive_normal(loc, scale, n):
+        ret_arr = np.random.normal(loc, scale, n)
+        mask = ret_arr <= 0
+        while mask.sum() > 0:
+            ret_arr[mask] = np.random.normal(loc, scale, mask.sum())
+            mask = ret_arr <= 0
+        return np.round(ret_arr, 2)
+
+    knapsack_values = positive_normal(50, 10, n)
+    knapsack_weights = positive_normal(50, 10, n)
+    knapsack_W = positive_normal(50 * n / 2, 10 * n / 2, 1)[0]
+
+    return formulate_knapsack(knapsack_values, knapsack_weights, knapsack_W)
+
+
+def example_random_knapsack(method=formulate_uniformly_random_knapsack):
+    x, knapsack_lp = method(5)
 
     print(knapsack_lp.get_A())
     print(knapsack_lp.get_b())
@@ -83,9 +109,7 @@ def example_random_knapsack():
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
 
 
-
-def example_kleemintycube():
-    n = 5 # number of variables
+def formulate_kleeminty_cube(n=5):
     kleemintycube_lp = LP()
     kleemintycube_values = [2 ** (n - 1 - i) for i in range(n)]
     x = {i: kleemintycube_lp.add_var(f"x{i}") for i in range(n)}
@@ -94,6 +118,11 @@ def example_kleemintycube():
         kleemintycube_lp.add_constr(sum(kleemintycube_weights[i] * x[i] for i in x) <= 5 ** (i+1))
         kleemintycube_lp.add_constr(x[i] >= 0)
     kleemintycube_lp.set_objective(sum(kleemintycube_values[i] * x[i] for i in x), MAXIMIZE)
+
+    return x, kleemintycube_lp
+    
+def example_kleemintycube():
+    x, kleemintycube_lp = formulate_kleeminty_cube(5)
 
     print(kleemintycube_lp.get_A())
     print(kleemintycube_lp.get_b())
@@ -108,6 +137,8 @@ def example_kleemintycube():
     print(f"Value: {kleemintycube_lp.objective.evaluate(c_sol)}")
 
 example_random_knapsack()
+example_random_knapsack(formulate_gaussian_knapsack)
+example_kleemintycube()
 
 
 
