@@ -32,7 +32,7 @@ def test_knapsack(fs, n):
     
     return tuple(times)
 
-fs = [bland_simplex, zadeh_simplex, cunningham_simplex]
+fs = [bland_simplex, zadeh_simplex, cunningham_simplex, ellipsoid_solver]
 x = list(range(5, 10))
 results = [test_knapsack(fs, n) for n in x]
 
@@ -41,8 +41,10 @@ b, z, c = list(map(list, zip(*results)))
 plt.plot(x, b, label="Bland's rule")
 plt.plot(x, z, label="Zadeh's rule")
 plt.plot(x, c, label="Cunningham's rule")
+plt.plot(x, e, label="Ellipsoid Method")
 
 plt.legend()
+plt.title("Performance Comparison on Knapsack Instances")
 plt.show()
 
 
@@ -67,7 +69,9 @@ b, z, c = list(map(list, zip(*results)))
 plt.plot(x, b, label="Bland's rule")
 plt.plot(x, z, label="Zadeh's rule")
 plt.plot(x, c, label="Cunningham's rule")
+plt.plot(x, e, label="Ellipsoid Method")
 
 plt.legend()
+plt.title("Performance Comparison on Klee-Minty Instances")
 plt.show()
 
