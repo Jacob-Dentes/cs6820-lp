@@ -224,9 +224,77 @@ def example_kleemintycube():
     print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {kleemintycube_lp.objective.evaluate(c_sol)}")
 
+def formulate_alvisfriedman(n=3):
+    eps = 1e-3
+    alvisfriedman_lp = LP()
+    a1 = {i: alvisfriedman_lp.add_var(f"a1{i}") for i in range(2, n+1)}
+    a0 = {i: alvisfriedman_lp.add_var(f"a0{i}") for i in range(2, n+1)}
+    c1 = {i: alvisfriedman_lp.add_var(f"c1{i}") for i in range(2, n+1)}
+    c0 = {i: alvisfriedman_lp.add_var(f"c0{i}") for i in range(2, n+1)}
+    d1 = {i: alvisfriedman_lp.add_var(f"d1{i}") for i in range(2, n+1)}
+    d0 = {i: alvisfriedman_lp.add_var(f"d0{i}") for i in range(2, n+1)}
+    b1 = {i: alvisfriedman_lp.add_var(f"b1{i}") for i in range(2, n)}
+    b0 = {i: alvisfriedman_lp.add_var(f"b0{i}") for i in range(2, n)}
+    e1 = {i: alvisfriedman_lp.add_var(f"b1{i}") for i in range(1, n+1)}
+    e0 = {i: alvisfriedman_lp.add_var(f"b0{i}") for i in range(1, n+1)}
+
+    alvisfriedman_lp.set_objective( eps * e1[1] * (2 * 1 + 8) + e0[1] * 8 + 
+        sum((a1[i] + b1[i] + c1[i]) * ((2 * i + 7) + eps * (2 * i + 8)) + eps * (d1[i] + e1[i]) * (2 * i + 8) + e0[i] * 8 for i in range(2, n))
+        + (a1[n] + c1[n]) * ((2 * n + 7) + eps * (2 * n + 8)) + eps * (d1[n] + e1[n]) * (2 * n + 8) + e0[n] * 8,
+                                    MAXIMIZE)
+    
+    alvisfriedman_lp.add_constr(a0[2] + a1[2] == 1 + eps * (b0[2] + c0[2] + d0[2] + e1[1]))
+    for i in range(3, n+1):
+        alvisfriedman_lp.add_constr(a0[i] + a1[i] == 1 + a0[i-1] + eps * (a1[i-1] + b1[i-1] + c1[i-1] + d1[i-1] + e1[i-1]))
+    for i in range(2, n):
+        if i == n-1:
+            alvisfriedman_lp.add_constr(b0[i] + b1[i] == 1 + d0[i+1])
+        else:
+            alvisfriedman_lp.add_constr(b0[i] + b1[i] == 1 + b0[i+1] + d0[i+1])
+        alvisfriedman_lp.add_constr(c0[i] + c1[i] == 1 + c0[i+1])
+    alvisfriedman_lp.add_constr(c0[n] + c1[n] == 1 + sum(e0[j] for j in range(1, n+1)))
+    for i in range(2, n+1):
+        if i == n:
+            alvisfriedman_lp.add_constr(d0[i] + d1[i] == 1 + (1 - eps) / 2 * (a1[i] + c1[i] + d1[i] + e1[i]))
+            alvisfriedman_lp.add_constr(e0[i] + e1[i] == 1 + (1 - eps) / 2 * (a1[i] + c1[i] + d1[i] + e1[i]))
+        else:
+            alvisfriedman_lp.add_constr(d0[i] + d1[i] == 1 + (1 - eps) / 2 * (a1[i] + b1[i] + c1[i] + d1[i] + e1[i]))
+            alvisfriedman_lp.add_constr(e0[i] + e1[i] == 1 + (1 - eps) / 2 * (a1[i] + b1[i] + c1[i] + d1[i] + e1[i]))
+    alvisfriedman_lp.add_constr(e0[1] + e1[1] == 1 + (1 - eps) * (b0[2] + c0[2] + d0[2] + e1[1]))
+
+    return a0, a1, b0, b1, c0, c1, d0, d1, e0, e1, alvisfriedman_lp
+
+def example_alvisfriedman():
+    a0, a1, b0, b1, c0, c1, d0, d1, e0, e1, alvisfriedman_lp = formulate_alvisfriedman()
+
+    A = alvisfriedman_lp.get_A()
+    b = alvisfriedman_lp.get_b()
+    c = alvisfriedman_lp.get_c()
+    print(A)
+    print(b)
+    print(c)
+    print("")
+
+    sol = simplex(A, b, c)
+    # print(f"Simplex Klee Minty Cube Solution: {[x[i].evaluate(sol) for i in x]}")
+    print(f"Value: {alvisfriedman_lp.objective.evaluate(sol)}")
+
+    try:
+        e_sol = ellipsoid_method(A, b, c, tolerance=1e-30, max_iter=10_000)
+        # print(f"Ellipsoid Knapsack Solution: {[x[i].evaluate(e_sol) for i in x]}")
+        print(f"Value: {alvisfriedman_lp.objective.evaluate(e_sol)}")
+    except InfeasibleException:
+        print("Ellipsoid failed on kleeminty cube")
+
+    c_sol = solve(A, b, c)
+    # print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
+    print(f"Value: {alvisfriedman_lp.objective.evaluate(c_sol)}")
+
 
 if __name__ == '__main__':
     example_knapsack()
     example_random_knapsack()
     example_random_knapsack(formulate_gaussian_knapsack)
     example_kleemintycube()
+    example_random_mcfp()
+    example_alvisfriedman()
