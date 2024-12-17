@@ -10,7 +10,8 @@ It is not meant to be used for production purposes, see [PySCIPOpt](https://gith
 
 ## Installation
 The package does not need to be installed, just place the `.py` files in the working directory of your project.
-Ensure that your environment has Numpy and Scipy.
+Ensure that your environment has a recent release of Numpy and Scipy. 
+Your environment also needs Networkx if you want to run the Min-cost flow examples.
 
 ## Features
 ### lp.py
@@ -50,7 +51,7 @@ print(program.get_c())
 ```
 
 ### simplex.py
-The file `simplex.py` contains an implementation of the revised Simplex method with multiple options for the pivoting algorithm.
+The file `simplex.py` contains an implementation of the revised simplex method with multiple options for the pivoting algorithm.
 Currently, the pivoting algorithms are:
 1. Bland's rule
 2. Zadeh's rule (also known as "least used")
@@ -81,8 +82,14 @@ x2_value = x2.evaluate(sol)
 x3_value = x3.evaluate(sol)
 ```
 
+### ellipsoid.py
+The file `ellipsoid.py` contains an implementation of ellipsoid method. It contains a function `ellipsoid_method` that has an identical API to the `simplex` method from `simplex.py`, except it also supports a `max_iter` argument to bound the number of iterations. The ellipsoid implementation does not use fixed point arithmetic, so may suffer strong numerical issues for large problems.
+
 ### correct_solver.py
 The file `correct_solver.py` contains a function for using Scipy to evaluate LP's created using `lp.py`. This is used for testing purposes.
 
 ### test_lp.py
-The file `test_lp.py` contains several example functions for testing our implementations. It has functions for constructing fractional knapsack and Klee-Minty cube instances.
+The file `test_lp.py` contains several example functions for testing our implementations. It has functions for constructing fractional knapsack, Klee-Minty cube, min-cost flow, and Alvis-Friedmann instances. You need Networkx to import this module.
+
+### analysis.py
+The file `analysis.py` contains our experiments. It formulates several LPs, runs each method on them, and reports the times. You need Networkx to run this script.
