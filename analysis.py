@@ -164,7 +164,7 @@ plt.plot((np.array(x) - 1) * 10, z, label="Zadeh's rule")
 plt.plot((np.array(x) - 1) * 10, c, label="Cunningham's rule")
 
 plt.legend()
-plt.title("Performance Comparison on Alvis-Friedman Instances")
+plt.title("Performance Comparison on Alvis-Friedmann Instances")
 plt.xlabel("Dimension")
 plt.ylabel("Time (s)")
 plt.show()
