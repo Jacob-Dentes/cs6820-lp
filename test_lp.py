@@ -225,7 +225,7 @@ def example_kleemintycube():
     print(f"Value: {kleemintycube_lp.objective.evaluate(c_sol)}")
 
 def formulate_alvisfriedman(n=3):
-    eps = 1e-3
+    eps = 1e-1
     alvisfriedman_lp = LP()
     a1 = {i: alvisfriedman_lp.add_var(f"a1{i}") for i in range(2, n+1)}
     a0 = {i: alvisfriedman_lp.add_var(f"a0{i}") for i in range(2, n+1)}
@@ -275,6 +275,10 @@ def example_alvisfriedman():
     print(c)
     print("")
 
+    c_sol = solve(A, b, c)
+    # print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
+    print(f"Value: {alvisfriedman_lp.objective.evaluate(c_sol)}")
+
     sol = simplex(A, b, c)
     # print(f"Simplex Klee Minty Cube Solution: {[x[i].evaluate(sol) for i in x]}")
     print(f"Value: {alvisfriedman_lp.objective.evaluate(sol)}")
@@ -285,10 +289,6 @@ def example_alvisfriedman():
         print(f"Value: {alvisfriedman_lp.objective.evaluate(e_sol)}")
     except InfeasibleException:
         print("Ellipsoid failed on kleeminty cube")
-
-    c_sol = solve(A, b, c)
-    # print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
-    print(f"Value: {alvisfriedman_lp.objective.evaluate(c_sol)}")
 
 
 if __name__ == '__main__':
