@@ -135,14 +135,14 @@ def example_random_knapsack(method=formulate_uniformly_random_knapsack):
     print(f"Scipy Knapsack Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
 
-def formulate_random_mcfp(n = 5, m = 10, capacity_range = (1, 11), demand_range = (1, 6), cost_range = (1, 6)):
+def formulate_random_mcfp(n = 5, m = 10, capacity_range = (1, 11), demand_range = (1, 6), cost_range = (1, 6), seed=None):
     mcfp_lp = LP()
     mcfp_values = np.random.randint(cost_range[0], cost_range[1], m)
     x = {i: mcfp_lp.add_var(f"x{i}") for i in range(m)}
     mcfp_lp.set_objective(sum(mcfp_values[i] * x[i] for i in x), MINIMIZE)
     d = np.random.randint(demand_range[0], demand_range[1])
 
-    G = nx.gnm_random_graph(n, m, directed=True)
+    G = nx.gnm_random_graph(n, m, directed=True, seed=seed)
     for i, (u, v) in enumerate(G.edges()):
         mcfp_lp.add_constr(x[i] <= np.random.randint(capacity_range[0], capacity_range[1]))
         mcfp_lp.add_constr(x[i] >= 0)
@@ -152,13 +152,15 @@ def formulate_random_mcfp(n = 5, m = 10, capacity_range = (1, 11), demand_range 
             for j, (u, v) in enumerate(G.edges()):
                 if u == node:
                     node_out.append(j)
-            mcfp_lp.add_constr(sum(x[i] for i in node_out) == d)
+            if len(node_out) > 0:
+                mcfp_lp.add_constr(sum(x[i] for i in node_out) == d)
         elif i == n - 1: # sink node
             node_in = []
             for j, (u, v) in enumerate(G.edges()):
                 if v == node:
                     node_in.append(j)
-            mcfp_lp.add_constr(sum(x[i] for i in node_in) == d)
+            if len(node_in) > 0:
+                mcfp_lp.add_constr(sum(x[i] for i in node_in) == d)
         else:
             node_in = []
             node_out = []
@@ -167,7 +169,8 @@ def formulate_random_mcfp(n = 5, m = 10, capacity_range = (1, 11), demand_range 
                     node_in.append(j)
                 elif u == node:
                     node_out.append(j)
-            mcfp_lp.add_constr(sum(x[i] for i in node_in) == sum(x[i] for i in node_out))
+            if len(node_in) > 0 or len(node_out) > 0:
+                mcfp_lp.add_constr(sum(x[i] for i in node_in) == sum(x[i] for i in node_out))
 
     return x, mcfp_lp
 
@@ -224,8 +227,7 @@ def example_kleemintycube():
     print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {kleemintycube_lp.objective.evaluate(c_sol)}")
 
-def formulate_alvisfriedman(n=3):
-    eps = 1e-1
+def formulate_alvisfriedman(n=3, eps=1e-1):
     alvisfriedman_lp = LP()
     a1 = {i: alvisfriedman_lp.add_var(f"a1{i}") for i in range(2, n+1)}
     a0 = {i: alvisfriedman_lp.add_var(f"a0{i}") for i in range(2, n+1)}

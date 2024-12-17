@@ -127,6 +127,7 @@ def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10, count_pivots=False
     """
     Use simplex method to solve Max (c^T x) subject to Ax <= b
     """
+    og_vars = A.shape[1]
     c = np.append(c, np.zeros(A.shape[0]))
     A = np.append(A, np.eye(A.shape[0]), axis=1)
 
@@ -155,7 +156,6 @@ def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10, count_pivots=False
             if init_basis[i] >= A.shape[1]:
                 # artificial variable w/ value 0 in basis
                 # want to replace with corresponding slack var
-                og_vars = A.shape[1] - A.shape[0]
                 replace_with = og_vars + bs[init_basis[i] - A.shape[1]]
                 init_basis[i] = replace_with
         init_basis = np.sort(init_basis)
