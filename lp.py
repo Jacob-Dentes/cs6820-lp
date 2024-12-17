@@ -158,6 +158,7 @@ class LP():
         self.variables = []
         self.constraints = []
         self.objective = Expression([], [], 0.0)
+        self.sense = MAXIMIZE
 
     def add_var(self, name=None, nonnegative=True):
         """
@@ -192,7 +193,9 @@ class LP():
         if isinstance(objective, Variable):
             objective = Expression([1.0], [objective], 0.0)
         assert isinstance(objective, Expression)
-        self.objective = sense * objective
+        self.objective = objective
+        sense * objective # ensure that sense is valid
+        self.sense = sense
 
     def get_A(self):
         """
@@ -222,9 +225,10 @@ class LP():
         Returns the vector c as a numpy array.
         Given in maximize c^T x form
         """
+        objective = self.sense * self.objective
         c = np.zeros(len(self.variables))
-        for i, var in enumerate(self.objective.variables):
-            c[var.index] += self.objective.coeffs[i]
+        for i, var in enumerate(objective.variables):
+            c[var.index] += objective.coeffs[i]
 
         return c
 
