@@ -121,7 +121,7 @@ def _simplex_aux(A, b, c, basis, tolerance, pivot_rule=blands_rule):
     x_b = sc.sparse.linalg.spsolve(A_b, b)
     sol = np.zeros(len(c))
     sol[basis] = x_b
-    return (sol, pivots)
+    return (sol, pivots, basis)
 
 def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10, count_pivots=False):
     """
@@ -146,12 +146,19 @@ def simplex(A, b, c, pivot_rule=blands_rule, tolerance=1e-10, count_pivots=False
 
         phase_1 = _simplex_aux(sc.sparse.csc_array(A_aux), b, c_aux, aux_basis, tolerance, pivot_rule)
 
-        if np.sum(phase_1[A.shape[1]+1:]) > tolerance:
+        if np.sum(phase_1[0][A.shape[1]+1:]) > tolerance:
             raise InfeasibleException("LP infeasible")
 
-        init_basis = np.array(list(range(A_aux.shape[1])))[phase_1[0] > tolerance]
-        assert len(init_basis) >= A.shape[0]
-        init_basis = init_basis[:A.shape[0]]
+        init_basis = phase_1[2]
+        bs = (b < 0).nonzero()[0]
+        for i in range(len(init_basis)):
+            if init_basis[i] >= A.shape[1]:
+                # artificial variable w/ value 0 in basis
+                # want to replace with corresponding slack var
+                og_vars = A.shape[1] - A.shape[0]
+                replace_with = og_vars + bs[init_basis[i] - A.shape[1]]
+                init_basis[i] = replace_with
+        init_basis = np.sort(init_basis)
 
     else:
         phase_1 = (None, 0)
