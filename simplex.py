@@ -40,7 +40,7 @@ def zadehs_rule(pivot_inp):
 
     # min ratio test
     denominators = system_sol[:, [entering_idx]].todense().flatten()
-    pos_denominators = denominators > 0
+    pos_denominators = denominators > tolerance
     if pos_denominators.sum() <= 0:
         raise UnboundedException("LP unbounded")
     leaving_idx = np.argmin(sc.sparse.linalg.spsolve(A_b, b)[pos_denominators] / denominators[pos_denominators])
@@ -66,7 +66,7 @@ def cunninghams_rule(pivot_inp):
 
     # min ratio test
     denominators = system_sol[:, [entering_idx]].todense().flatten()
-    pos_denominators = denominators > 0
+    pos_denominators = denominators > tolerance
     if pos_denominators.sum() <= 0:
         raise UnboundedException("LP unbounded")
     leaving_idx = np.argmin(sc.sparse.linalg.spsolve(A_b, b)[pos_denominators] / denominators[pos_denominators])
