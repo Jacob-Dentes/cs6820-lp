@@ -277,16 +277,16 @@ def example_alvisfriedman():
 
     c_sol = solve(A, b, c)
     # print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
-    print(f"Value: {alvisfriedman_lp.objective.evaluate(c_sol)}")
+    print(f"Scipy Value: {alvisfriedman_lp.objective.evaluate(c_sol)}")
 
     sol = simplex(A, b, c)
     # print(f"Simplex Klee Minty Cube Solution: {[x[i].evaluate(sol) for i in x]}")
-    print(f"Value: {alvisfriedman_lp.objective.evaluate(sol)}")
+    print(f"Simplex Value: {alvisfriedman_lp.objective.evaluate(sol)}")
 
     try:
         e_sol = ellipsoid_method(A, b, c, tolerance=1e-30, max_iter=10_000)
         # print(f"Ellipsoid Knapsack Solution: {[x[i].evaluate(e_sol) for i in x]}")
-        print(f"Value: {alvisfriedman_lp.objective.evaluate(e_sol)}")
+        print(f"Ellipsoid Value: {alvisfriedman_lp.objective.evaluate(e_sol)}")
     except InfeasibleException:
         print("Ellipsoid failed on kleeminty cube")
 
