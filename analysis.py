@@ -4,6 +4,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+from lp import InfeasibleException
 import test_lp
 from simplex import *
 from ellipsoid import ellipsoid_method
@@ -20,6 +21,11 @@ simplex_closure = lambda x: lambda a, b, c: simplex(a, b, c, x)
 bland_simplex = simplex_closure(blands_rule)
 zadeh_simplex = simplex_closure(zadehs_rule)
 cunningham_simplex = simplex_closure(cunninghams_rule)
+def ellipsoid_func(A, b, c):
+    try:
+        ellipsoid_method(A, b, c)
+    except InfeasibleException:
+        pass
 
 # time functions in list fs on TRIALS knapsack instances of size n
 def test_knapsack(fs, n):    
@@ -33,8 +39,8 @@ def test_knapsack(fs, n):
     
     return tuple(times)
 
-fs = [bland_simplex, zadeh_simplex, cunningham_simplex, ellipsoid_method]
-x = list(range(5, 10))
+fs = [bland_simplex, zadeh_simplex, cunningham_simplex, ellipsoid_func]
+x = list(range(5, 20))
 results = [test_knapsack(fs, n) for n in x]
 
 b, z, c, e = list(map(list, zip(*results)))
@@ -63,7 +69,7 @@ def test_kleeminty(fs, n):
     
     return tuple(times)
 
-fs = [bland_simplex, zadeh_simplex, cunningham_simplex, ellipsoid_method]
+fs = [bland_simplex, zadeh_simplex, cunningham_simplex, ellipsoid_func]
 x = list(range(5, 10))
 results = [test_kleeminty(fs, n) for n in x]
 
