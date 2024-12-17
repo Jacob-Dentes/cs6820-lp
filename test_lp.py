@@ -1,5 +1,6 @@
 from lp import LP, MAXIMIZE
 from simplex import simplex
+from ellipsoid import ellipsoid_method
 from correct_solver import solve
 import random
 import numpy as np
@@ -35,15 +36,24 @@ def example_knapsack():
     knapsack_lp.add_constr(sum(knapsack_weights[i] * x[i] for i in x) <= knapsack_W)
     knapsack_lp.set_objective(sum(knapsack_values[i] * x[i] for i in x), MAXIMIZE)
 
-    print(knapsack_lp.get_A())
-    print(knapsack_lp.get_b())
-    print(knapsack_lp.get_c())
+    A = knapsack_lp.get_A()
+    b = knapsack_lp.get_b()
+    c = knapsack_lp.get_c()
+
+    print(A)
+    print(b)
+    print(c)
     print("")
 
-    sol = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
-    c_sol = solve(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
-    print(f"Example Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
+    sol = simplex(A, b, c)
+    print(f"Simplex Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(sol)}")
+
+    e_sol = ellipsoid_method(A, b, c)
+    print(f"Ellipsoid Knapsack Solution: {[x[i].evaluate(e_sol) for i in x]}")
+    print(f"Value: {knapsack_lp.objective.evaluate(e_sol)}")
+
+    c_sol = solve(A, b, c)
     print(f"Scipy Knapsack Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
 
@@ -96,15 +106,24 @@ def formulate_gaussian_knapsack(n=5):
 def example_random_knapsack(method=formulate_uniformly_random_knapsack):
     x, knapsack_lp = method(5)
 
-    print(knapsack_lp.get_A())
-    print(knapsack_lp.get_b())
-    print(knapsack_lp.get_c())
+    A = knapsack_lp.get_A()
+    b = knapsack_lp.get_b()
+    c = knapsack_lp.get_c()
+
+    print(A)
+    print(b)
+    print(c)
     print("")
 
-    sol = simplex(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
-    c_sol = solve(knapsack_lp.get_A(), knapsack_lp.get_b(), knapsack_lp.get_c())
-    print(f"Example Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
+    sol = simplex(A, b, c)
+    print(f"Simplex Knapsack Solution: {[x[i].evaluate(sol) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(sol)}")
+
+    e_sol = ellipsoid_method(A, b, c)
+    print(f"Ellipsoid Knapsack Solution: {[x[i].evaluate(e_sol) for i in x]}")
+    print(f"Value: {knapsack_lp.objective.evaluate(e_sol)}")
+
+    c_sol = solve(A, b, c)
     print(f"Scipy Knapsack Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
 
@@ -124,18 +143,27 @@ def formulate_kleeminty_cube(n=5):
 def example_kleemintycube():
     x, kleemintycube_lp = formulate_kleeminty_cube(5)
 
-    print(kleemintycube_lp.get_A())
-    print(kleemintycube_lp.get_b())
-    print(kleemintycube_lp.get_c())
+    A = kleemintycube_lp.get_A()
+    b = kleemintycube_lp.get_b()
+    c = kleemintycube_lp.get_c()
+    print(A)
+    print(b)
+    print(c)
     print("")
 
-    sol = simplex(kleemintycube_lp.get_A(), kleemintycube_lp.get_b(), kleemintycube_lp.get_c())
-    c_sol = solve(kleemintycube_lp.get_A(), kleemintycube_lp.get_b(), kleemintycube_lp.get_c())
-    print(f"Example Klee Minty Cube Solution: {[x[i].evaluate(sol) for i in x]}")
+    sol = simplex(A, b, c)
+    print(f"Simplex Klee Minty Cube Solution: {[x[i].evaluate(sol) for i in x]}")
     print(f"Value: {kleemintycube_lp.objective.evaluate(sol)}")
+
+    # e_sol = ellipsoid_method(A, b, c, tolerance=1e-30, max_iter=10_000)
+    # print(f"Ellipsoid Knapsack Solution: {[x[i].evaluate(e_sol) for i in x]}")
+    # print(f"Value: {kleemintycube_lp.objective.evaluate(e_sol)}")
+
+    c_sol = solve(A, b, c)
     print(f"Scipy Klee Minty Cube Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {kleemintycube_lp.objective.evaluate(c_sol)}")
 
+example_knapsack()
 example_random_knapsack()
 example_random_knapsack(formulate_gaussian_knapsack)
 example_kleemintycube()
