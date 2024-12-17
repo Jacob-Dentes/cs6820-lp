@@ -35,7 +35,7 @@ def ellipsoid_method(A, b, c, tolerance=1e-10, max_iter=1000):
     
     m, n = A.shape
     x = np.zeros(n)
-    P = np.eye(n) * n**2  # Initial ellipsoid
+    P = np.eye(n) * 2**(n)  # Initial ellipsoid
     
     for iteration in range(max_iter):
         # Check feasibility
