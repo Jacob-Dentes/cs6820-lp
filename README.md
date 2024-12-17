@@ -83,10 +83,10 @@ x3_value = x3.evaluate(sol)
 ```
 
 ### ellipsoid.py
-The file `ellipsoid.py` contains an implementation of ellipsoid method. It contains a function `ellipsoid_method` that has an identical API to the `simplex` method from `simplex.py`, except it also supports a `max_iter` argument to bound the number of iterations. The ellipsoid implementation does not use fixed point arithmetic, so may suffer strong numerical issues for large problems.
+The file `ellipsoid.py` contains an implementation of ellipsoid method. It contains a function `ellipsoid_method` that has an identical API to the `simplex` method from `simplex.py`, except it also supports a `max_iter` argument to bound the number of iterations (and it does not have pivot rules). The ellipsoid implementation does not use fixed point arithmetic, so may suffer strong numerical issues for large problems.
 
 ### correct_solver.py
-The file `correct_solver.py` contains a function for using Scipy to evaluate LP's created using `lp.py`. This is used for testing purposes.
+The file `correct_solver.py` contains a function for using Scipy to evaluate LPs created using `lp.py`. This is used for testing purposes.
 
 ### test_lp.py
 The file `test_lp.py` contains several example functions for testing our implementations. It has functions for constructing fractional knapsack, Klee-Minty cube, min-cost flow, and Alvis-Friedmann instances. You need Networkx to import this module.
