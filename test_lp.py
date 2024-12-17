@@ -1,8 +1,9 @@
-from lp import LP, MAXIMIZE
+from lp import LP, MAXIMIZE, MINIMIZE
 from simplex import simplex
 from correct_solver import solve
 import random
 import numpy as np
+import networkx as nx
 
 def simple_example():
     program = LP()
@@ -108,6 +109,56 @@ def example_random_knapsack(method=formulate_uniformly_random_knapsack):
     print(f"Scipy Knapsack Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {knapsack_lp.objective.evaluate(c_sol)}")
 
+def formulate_random_mcfp(n = 5, m = 10, capacity_range = (1, 11), demand_range = (1, 6), cost_range = (1, 6)):
+    mcfp_lp = LP()
+    mcfp_values = np.random.randint(cost_range[0], cost_range[1], m)
+    x = {i: mcfp_lp.add_var(f"x{i}") for i in range(m)}
+    mcfp_lp.set_objective(sum(mcfp_values[i] * x[i] for i in x), MINIMIZE)
+    d = np.random.randint(demand_range[0], demand_range[1])
+
+    G = nx.gnm_random_graph(n, m, directed=True)
+    for i, (u, v) in enumerate(G.edges()):
+        mcfp_lp.add_constr(x[i] <= np.random.randint(capacity_range[0], capacity_range[1]))
+        mcfp_lp.add_constr(x[i] >= 0)
+    for i,  node in enumerate(G.nodes()):
+        if i == 0: # source node
+            node_out = []
+            for j, (u, v) in enumerate(G.edges()):
+                if u == node:
+                    node_out.append(j)
+            mcfp_lp.add_constr(sum(x[i] for i in node_out) == d)
+        elif i == n - 1: # sink node
+            node_in = []
+            for j, (u, v) in enumerate(G.edges()):
+                if v == node:
+                    node_in.append(j)
+            mcfp_lp.add_constr(sum(x[i] for i in node_in) == d)
+        else:
+            node_in = []
+            node_out = []
+            for j, (u, v) in enumerate(G.edges()):
+                if v == node:
+                    node_in.append(j)
+                elif u == node:
+                    node_out.append(j)
+            mcfp_lp.add_constr(sum(x[i] for i in node_in) == sum(x[i] for i in node_out))
+
+    return x, mcfp_lp
+
+def example_random_mcfp():
+    x, mcfp_lp = formulate_random_mcfp()
+    print(mcfp_lp.get_A())
+    print(mcfp_lp.get_b())
+    print(mcfp_lp.get_c())
+    print("")
+
+    sol = simplex(mcfp_lp.get_A(), mcfp_lp.get_b(), mcfp_lp.get_c())
+    print(f"Example MCFP Solution: {[x[i].evaluate(sol) for i in x]}")
+    print(f"Value: {mcfp_lp.objective.evaluate(sol)}")
+    c_sol = solve(mcfp_lp.get_A(), mcfp_lp.get_b(), mcfp_lp.get_c())
+    print(f"Scipy MCFP Solution: {[x[i].evaluate(c_sol) for i in x]}")
+    print(f"Value: {mcfp_lp.objective.evaluate(c_sol)}")
+
 
 def formulate_kleeminty_cube(n=5):
     kleemintycube_lp = LP()
@@ -139,6 +190,7 @@ def example_kleemintycube():
 example_random_knapsack()
 example_random_knapsack(formulate_gaussian_knapsack)
 example_kleemintycube()
+example_random_mcfp()
 
 
 
