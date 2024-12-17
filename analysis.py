@@ -23,7 +23,7 @@ zadeh_simplex = simplex_closure(zadehs_rule)
 cunningham_simplex = simplex_closure(cunninghams_rule)
 def ellipsoid_func(A, b, c):
     try:
-        ellipsoid_method(A, b, c)
+        ellipsoid_method(A, b, c, max_iter=100_000)
     except InfeasibleException:
         pass
 

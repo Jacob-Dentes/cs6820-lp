@@ -178,13 +178,13 @@ def example_random_mcfp():
     print(mcfp_lp.get_c())
     print("")
 
-    sol = simplex(mcfp_lp.get_A(), mcfp_lp.get_b(), mcfp_lp.get_c())
-    print(f"Example MCFP Solution: {[x[i].evaluate(sol) for i in x]}")
-    print(f"Value: {mcfp_lp.objective.evaluate(sol)}")
     c_sol = solve(mcfp_lp.get_A(), mcfp_lp.get_b(), mcfp_lp.get_c())
     print(f"Scipy MCFP Solution: {[x[i].evaluate(c_sol) for i in x]}")
     print(f"Value: {mcfp_lp.objective.evaluate(c_sol)}")
 
+    sol = simplex(mcfp_lp.get_A(), mcfp_lp.get_b(), mcfp_lp.get_c())
+    print(f"Example MCFP Solution: {[x[i].evaluate(sol) for i in x]}")
+    print(f"Value: {mcfp_lp.objective.evaluate(sol)}")
 
 def formulate_kleeminty_cube(n=5):
     kleemintycube_lp = LP()
